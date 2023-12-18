@@ -1,23 +1,13 @@
 package org.firstinspires.ftc.teamcode.TERbot;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
-
-import android.util.Size;
-
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
-import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-import org.firstinspires.ftc.teamcode.TERbot.HelperMethods;
-import org.firstinspires.ftc.teamcode.TERbot.AprilTagLocation;
 import org.firstinspires.ftc.teamcode.TERbot.Constants.*;
 
 import java.util.List;
@@ -29,14 +19,18 @@ public class PrimaryTeleop extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
 
-    private DcMotor leftMotor;
-    private DcMotor rightMotor;
+    private DcMotor frontLeftDriveMotor;
+    private DcMotor frontRightDriveMotor;
+    private DcMotor backLeftDriveMotor;
+    private DcMotor backRightDriveMotor;
     private DcMotor armMotor;
 
     private DcMotor clawPivotMotor;
 
     private Servo rightClawServo;
     private Servo leftClawServo;
+
+    private Servo droneServo;
 
     public WebcamName camera;
 
@@ -51,12 +45,15 @@ public class PrimaryTeleop extends LinearOpMode {
 
         camera = hardwareMap.get(WebcamName.class, "Webcam 1");
         tagLocator.initAprilTag(camera);
-        leftMotor = hardwareMap.get(DcMotor.class, "leftMotor");
-        rightMotor = hardwareMap.get(DcMotor.class, "rightMotor");
+        frontLeftDriveMotor = hardwareMap.get(DcMotor.class, "frontLeft");
+        frontRightDriveMotor = hardwareMap.get(DcMotor.class, "frontRight");
+        backLeftDriveMotor = hardwareMap.get(DcMotor.class, "backLeft");
+        backRightDriveMotor = hardwareMap.get(DcMotor.class, "backRight");
         armMotor = hardwareMap.get(DcMotor.class, "armMotor");
         rightClawServo = hardwareMap.get(Servo.class, "rightClawServo");
         leftClawServo = hardwareMap.get(Servo.class, "leftClawServo");
         clawPivotMotor = hardwareMap.get(DcMotor.class, "clawPivotMotor");
+        droneServo = hardwareMap.get(Servo.class, "droneServo");
 
 
 
@@ -66,33 +63,64 @@ public class PrimaryTeleop extends LinearOpMode {
         telemetry.update();
 
 
-        chassis = new ChassisSubsystem(leftMotor, rightMotor);
+        chassis = new ChassisSubsystem(frontLeftDriveMotor, frontRightDriveMotor, backLeftDriveMotor, backRightDriveMotor);
         arm = new ArmSubsystem(armMotor, leftClawServo, rightClawServo, clawPivotMotor);
 
 
         waitForStart();
         runtime.reset();
 
+
         //These receive pure controller inputs
         double fwdPwr;
+        double strafePwr;
         double rotationPwr;
         double armPwr;
         double clawServoInput;
         double clawPivotInput;
+        double droneServoPos = DroneConstants.START_DRONE_SERVO_POS;
+
 
         while (opModeIsActive()) {
-            fwdPwr = gamepad1.left_stick_y;
+            fwdPwr = -gamepad1.left_stick_y;
+            strafePwr = -gamepad1.left_stick_x;
             rotationPwr = -gamepad1.right_stick_x;
             armPwr = -gamepad2.left_stick_y;
             clawServoInput = gamepad2.right_trigger - gamepad2.left_trigger;
-            clawPivotInput = -gamepad2.right_stick_y;
+            clawPivotInput = -gamepad2.right_stick_y * 1.5;
+
+            if (gamepad2.a) {
+                arm.closeRightClaw();
+            }
+
+            if (gamepad2.b) {
+                arm.openRightClaw();
+            }
+
+            if (gamepad2.x) {
+                arm.closeLeftClaw();
+            }
+
+            if (gamepad2.y) {
+                arm.openLeftClaw();
+            }
+
+            if (gamepad1.a) {
+                droneServoPos = DroneConstants.FIRE_DRONE_SERVO_POS;
+            }
+            else if (gamepad1.b) {
+                droneServoPos = DroneConstants.START_DRONE_SERVO_POS;
+            }
+            droneServo.setPosition(droneServoPos);
+
 
 
             //Input is divided by 80 in method to allow for more precise claw movement
             arm.moveClaw(clawServoInput);
+
             arm.pivotClaw(clawPivotInput, 0.4);
             arm.pivotArm(armPwr, 0.4);
-            chassis.moveRobot(fwdPwr, rotationPwr);
+            chassis.moveRobotMecanum(fwdPwr, strafePwr, rotationPwr);
 
             telemetryAprilTag();
 
@@ -103,8 +131,13 @@ public class PrimaryTeleop extends LinearOpMode {
                 tagLocator.visionPortal.resumeStreaming();
             }
 
-
-            telemetry.addData("Backleft encoder", leftMotor.getCurrentPosition());
+            telemetry.addData("Left stick x", strafePwr);
+            telemetry.addData("left stick y", fwdPwr);
+            telemetry.addData("right stick x", rotationPwr);
+            telemetry.addData("FrontLeft encoder", frontLeftDriveMotor.getCurrentPosition());
+            telemetry.addData("BackLeft encoder", backLeftDriveMotor.getCurrentPosition());
+            telemetry.addData("FrontRigght encoder", frontRightDriveMotor.getCurrentPosition());
+            telemetry.addData("BackRight enc", backRightDriveMotor.getCurrentPosition());
             telemetry.addData("armMotorEncoder", armMotor.getCurrentPosition());
             telemetry.addData("DesiredPosition", arm.armPivotMotorPosition);
             telemetry.addData("Left claw servo POS", leftClawServo.getPosition());
