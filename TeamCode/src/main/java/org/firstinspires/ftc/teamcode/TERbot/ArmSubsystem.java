@@ -1,8 +1,12 @@
 package org.firstinspires.ftc.teamcode.TERbot;
 
+import androidx.appcompat.widget.ThemedSpinnerAdapter;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import org.firstinspires.ftc.teamcode.TERbot.Constants.*;
+
 
 public class ArmSubsystem {
 
@@ -24,7 +28,8 @@ public class ArmSubsystem {
     double maxClawServosPosition = Constants.ClawConstants.MAX_CLAW_POSITION;
     double minClawServosPosition = Constants.ClawConstants.MIN_CLAW_POSITION;
     double clawServosDefaultPosition = Constants.ClawConstants.CLAW_SERVOS_START_POSITION;
-    double clawServosCurrentPosition = clawServosDefaultPosition;
+    double leftClawServoCurrentPosition = clawServosDefaultPosition;
+    double rightClawServoCurrentPosition = clawServosDefaultPosition;
 
 
 
@@ -52,12 +57,19 @@ public class ArmSubsystem {
     }
 
     public void closeClaw() {
-        this.setClawPosition(0.90);
+        this.setClawPosition(ClawConstants.MAX_CLAW_POSITION);
     }
 
     public void openClaw() {
-        this.setClawPosition(0.85);
+        this.setClawPosition(ClawConstants.MIN_CLAW_POSITION);
     }
+
+    public void closeLeftClaw() {this.setLeftClawPosition(ClawConstants.MAX_CLAW_POSITION);}
+    public void openLeftClaw() {this.setLeftClawPosition(ClawConstants.MIN_CLAW_POSITION);}
+    public void closeRightClaw() {this.setRightClawPosition(ClawConstants.MAX_CLAW_POSITION);}
+    public void openRightClaw() {this.setRightClawPosition(ClawConstants.MIN_CLAW_POSITION);}
+
+
 
 
 
@@ -79,10 +91,12 @@ public class ArmSubsystem {
     }
     public void moveClaw(double clawInput) {
         //Input is divided by 80 to allow for more precise claw movement
-        clawServosCurrentPosition += clawInput / 80;
-        clawServosCurrentPosition = HelperMethods.clipDouble(clawServosCurrentPosition, minClawServosPosition, maxClawServosPosition);
-        rightClawServo.setPosition(clawServosCurrentPosition);
-        leftClawServo.setPosition(clawServosCurrentPosition);
+        rightClawServoCurrentPosition += clawInput / 80;
+        leftClawServoCurrentPosition += clawInput / 80;
+        rightClawServoCurrentPosition = HelperMethods.clipDouble(rightClawServoCurrentPosition, minClawServosPosition, maxClawServosPosition);
+        leftClawServoCurrentPosition = HelperMethods.clipDouble(leftClawServoCurrentPosition, minClawServosPosition, maxClawServosPosition);
+        rightClawServo.setPosition(rightClawServoCurrentPosition);
+        leftClawServo.setPosition(leftClawServoCurrentPosition);
     }
 
 
@@ -103,8 +117,25 @@ public class ArmSubsystem {
     }
     public void setClawPosition(double clawPos) {
         //Input is divided by 80 to allow for more precise claw movement
-        clawServosCurrentPosition = HelperMethods.clipDouble(clawPos, minClawServosPosition, maxClawServosPosition);
-        rightClawServo.setPosition(clawServosCurrentPosition);
-        leftClawServo.setPosition(clawServosCurrentPosition);
+        leftClawServoCurrentPosition = HelperMethods.clipDouble(clawPos, minClawServosPosition, maxClawServosPosition);
+        rightClawServoCurrentPosition = HelperMethods.clipDouble(clawPos, minClawServosPosition, maxClawServosPosition);
+        rightClawServo.setPosition(rightClawServoCurrentPosition);
+        leftClawServo.setPosition(leftClawServoCurrentPosition);
+    }
+
+
+    //These methods should only be used to toggle the left and right claws open and close
+    //They do not actually change the value of the claw's current position. This means
+    //tapping the triggers will immediately return the claw to its position before the button was pressed
+    public void setLeftClawPosition(double leftClawPos) {
+        leftClawServoCurrentPosition = leftClawPos;
+        leftClawServoCurrentPosition = HelperMethods.clipDouble(leftClawServoCurrentPosition, minClawServosPosition, maxClawServosPosition);
+        leftClawServo.setPosition(leftClawPos);
+    }
+
+    public void setRightClawPosition(double rightClawPos) {
+        rightClawServoCurrentPosition = rightClawPos;
+        rightClawServoCurrentPosition = HelperMethods.clipDouble(rightClawServoCurrentPosition, minClawServosPosition, maxClawServosPosition);
+        rightClawServo.setPosition(rightClawPos);
     }
 }

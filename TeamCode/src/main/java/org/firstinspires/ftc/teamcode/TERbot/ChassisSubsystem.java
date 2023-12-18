@@ -1,43 +1,63 @@
 package org.firstinspires.ftc.teamcode.TERbot;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 public class ChassisSubsystem {
 
-    DcMotor leftMotor;
+    DcMotor frontLeftMotor;
+    DcMotor frontRightMotor;
+    DcMotor backLeftMotor;
+    DcMotor backRightMotor;
 
-    DcMotor rightMotor;
-
-    double driveSpeed;
+    double fwdSpeed;
+    double strafeSpeed;
     double turnSpeed;
-    double leftSpeed;
-    double rightSpeed;
+    double frontLeftSpeed;
+    double frontRightSpeed;
+    double backLeftSpeed;
+    double backRightSpeed;
 
-    public ChassisSubsystem(DcMotor leftDrive, DcMotor rightDrive) {
-        this.leftMotor = leftDrive;
-        this.rightMotor = rightDrive;
+
+    public ChassisSubsystem(DcMotor frontLeftDrive, DcMotor frontRightDrive, DcMotor backLeftDrive, DcMotor backRightDrive) {
+        this.frontLeftMotor = frontLeftDrive;
+        this.frontRightMotor = frontRightDrive;
+        this.backRightMotor = backRightDrive;
+        this.backLeftMotor = backLeftDrive;
+
+        //backRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        //frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        backLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
     }
 
 
-    public void moveRobot(double drive, double turn) {
-        driveSpeed = drive;     // save this value as a class member so it can be used by telemetry.
-        turnSpeed  = turn;      // save this value as a class member so it can be used by telemetry.
+    //Forward is positive x
+    //Left is positive y
+    //CCW is positive yaw
+    public void moveRobotMecanum(double fwd, double strafe, double turn) {
+        fwdSpeed = fwd;
+        strafeSpeed = strafe;
+        turnSpeed = turn;
 
+        frontLeftSpeed = fwdSpeed - strafeSpeed - turnSpeed;
+        backLeftSpeed = fwdSpeed + strafeSpeed - turnSpeed;
+        frontRightSpeed = fwdSpeed + strafeSpeed + turnSpeed;
+        backRightSpeed= fwdSpeed -strafeSpeed + turnSpeed;
 
-        leftSpeed  = drive - turn;
-        rightSpeed = drive + turn;
+        double max = Math.max(Math.abs(frontLeftSpeed), Math.abs(frontRightSpeed));
+        max = Math.max(max, Math.abs(backLeftSpeed));
+        max = Math.max(max, Math.abs(backRightSpeed));
 
-
-        // Scale speeds down if either one exceeds +/- 1.0;
-        double max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
-        if (max > 1.0)
-        {
-            leftSpeed /= max;
-            rightSpeed /= max;
+        if(max > 1.0) {
+            frontLeftSpeed /= max;
+            frontRightSpeed /= max;
+            backLeftSpeed /= max;
+            backRightSpeed /= max;
         }
-        leftMotor.setPower(leftSpeed);
-        rightMotor.setPower(rightSpeed);
+        frontLeftMotor.setPower(frontLeftSpeed);
+        frontRightMotor.setPower(frontRightSpeed);
+        backLeftMotor.setPower(backLeftSpeed);
+        backRightMotor.setPower(backRightSpeed);
     }
-
-
 }

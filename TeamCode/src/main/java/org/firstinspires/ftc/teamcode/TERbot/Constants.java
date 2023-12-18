@@ -7,20 +7,18 @@ public class Constants {
 
 
     class ArmConstants {
-
-
         //The arm starts at its lowest position for frame perimeter and set up, but it's min position
         //is higher up. This is because going below the desired min position will result in the claw
         //getting stuck under the chassis while driving
-        public static final int MIN_ARM_POSITION = 85;
+        public static final int MIN_ARM_POSITION = 100;
         public static final int MAX_ARM_POSITION = 250;
 
     }
 
     class ClawConstants {
-        public static final double CLAW_SERVOS_START_POSITION = 0.85;
-        public static final double MAX_CLAW_POSITION = CLAW_SERVOS_START_POSITION + 0.05;
-        public static final double MIN_CLAW_POSITION = CLAW_SERVOS_START_POSITION - 0.05;
+        public static final double CLAW_SERVOS_START_POSITION = 0.95;
+        public static final double MAX_CLAW_POSITION = 0.975;
+        public static final double MIN_CLAW_POSITION = 0.9;
 
         //These positions are calibrated on the assumption that the 0 value is when
         //the claw is resting on the ground while the arm is as far down as it can go
@@ -31,6 +29,11 @@ public class Constants {
 
     class DriveConstants {
 
+    }
+
+    class DroneConstants {
+        public static final double START_DRONE_SERVO_POS = 0;
+        public static final double FIRE_DRONE_SERVO_POS = 0.88;
     }
 
 
